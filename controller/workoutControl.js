@@ -2,7 +2,7 @@ const { workout } = require('../models');
 
 async function getWorkout(req, res) {
     try {
-        const workouts = await workout.find({}).sort({ day:1 }).exec();
+        const workouts = await workout.find({}).sort({ day: 1 }).exec();
         res.json(workouts);
     } catch (err) {
         res.json(err);
@@ -11,11 +11,17 @@ async function getWorkout(req, res) {
 
 async function getMore(req, res) {
     try {
-        let workouts = await workout.aggregate([
+        const workouts = await workout.aggregate([
+            {
+                $addFields: {
+                    totalDuration: { $sum: "$exercises.duration" }
+                }
+            },
+            { $limit: 7 },
             { $sort: { day: -1 }},
-            { $linit: 7 },
-            { $addFields: { totalDuration: { $sum: $exercises.duration }}},
-        ]);
+        ])
+
+        console.log(workouts)
         workouts.reverse();
         res.json(workouts);
     } catch (err) {
@@ -36,7 +42,7 @@ async function addExercise(req, res) {
     try {
         const update = await workout.updateOne(
             { _id: req.params.id },
-            { $push: { $exercises:req.body }}
+            { $push: { $exercises: req.body } }
         );
         res.json(update);
     } catch (err) {
